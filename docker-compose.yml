@@ -1,0 +1,71 @@
+version: '2'
+services:
+  mongodb:
+    image: t3ctechnologies/mongodb:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+  postgresql:
+    image: postgres:latest
+    container_name: mft_linshare
+    environment:
+      - POSTGRES_USER=linshare
+      - POSTGRES_PASSWORD=linshare
+      - POSTGRES_DB=linshare
+      - LANG=en_US.utf8
+    volumes:
+      - ./postgresql/createDatabase.sh:/docker-entrypoint-initdb.d/1-db.sh
+      - ./postgresql/createSchema.sql:/docker-entrypoint-initdb.d/2-schema.sql
+      - ./postgresql/import-postgresql.sql:/docker-entrypoint-initdb.d/3-data.sql
+    ports:
+      - "5432:5432"
+  postgresql_data:
+    image: postgres:latest
+    container_name: mft_linshare_data
+    environment:
+      - POSTGRES_USER=linshare_data
+      - POSTGRES_PASSWORD=linshare_data
+      - POSTGRES_DB=linshare_data
+      - LANG=en_US.utf8
+    volumes:
+      - ./postgresql/createDatabase.sh:/docker-entrypoint-initdb.d/1-db.sh
+      - ./postgresql/createSchema.sql:/docker-entrypoint-initdb.d/2-schema.sql
+      - ./postgresql/import-postgresql.sql:/docker-entrypoint-initdb.d/3-data.sql
+    ports:
+      - "5433:5433"
+  open_ldap:
+    image: osixia/openldap:1.1.9
+    container_name: openldap
+    environment:
+      LDAP_LOG_LEVEL: "256"
+      LDAP_ORGANISATION: "Example Inc."
+      LDAP_DOMAIN: "example.org"
+      LDAP_BASE_DN: ""
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_CONFIG_PASSWORD: "config"
+      LDAP_READONLY_USER: "false"
+      LDAP_RFC2307BIS_SCHEMA: "false"
+      LDAP_BACKEND: "hdb"
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+      LDAP_TLS_ENFORCE: "false"
+      LDAP_TLS_CIPHER_SUITE: "SECURE256:-VERS-SSL3.0"
+      LDAP_TLS_PROTOCOL_MIN: "3.1"
+      LDAP_TLS_VERIFY_CLIENT: "demand"
+      LDAP_REPLICATION: "false"
+      KEEP_EXISTING_CONFIG: "false"
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+      LDAP_SSL_HELPER_PREFIX: "ldap"
+    tty: true
+    stdin_open: true
+    volumes:
+      - /var/lib/ldap
+      - /etc/ldap/slapd.d
+      - /container/service/slapd/assets/certs/
+    ports:
+      - "389:389"
+      - "636:636"
+    domainname: "example.org" # important: same as hostname
+    hostname: "example.org"
